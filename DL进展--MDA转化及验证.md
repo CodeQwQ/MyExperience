@@ -208,5 +208,19 @@ cite score:4.5（2025.5.6）
 
    6. 最后得到的图，应该是有的需要添加（2），有的需要删除的（3），无法面对所有的情况
 
-      
 
+### Model Transformation
+
+#### introduction
+
+ change propagation 和 metamodel/model coupled evolution用来**评估**模型转换的潜力和意义
+change propagation（转换的时候源和目标都要更新）解决方法：
+
+1. 用双向转换语言
+2. 手动前向和后向编程转换并人为确保一致性
+
+metamodel/model coupled evolution（随着时间推移模型和元模型需要一起更新）
+
+#### classification
+
+几种分类还不是很理解，看完下面的语言回过头再看看
