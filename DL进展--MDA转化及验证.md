@@ -210,7 +210,7 @@ cite score:4.5（2025.5.6）
 
 
 ### Model Transformation
-
+Formal Methods for Model-Driven Engineering (SFM 2012) 暑期学校 springer出版论文集
 #### introduction
 
  change propagation 和 metamodel/model coupled evolution用来**评估**模型转换的潜力和意义
@@ -222,5 +222,232 @@ change propagation（转换的时候源和目标都要更新）解决方法：
 metamodel/model coupled evolution（随着时间推移模型和元模型需要一起更新）
 
 #### classification
-
 几种分类还不是很理解，看完下面的语言回过头再看看
+
+#### Language
+看完感觉也是白看，除了ATL有格式例子，都是在说语言特性（是什么方法类型的、单向双向、声明式还是命令式等等）
+- **操作式（Operational / Imperative）**
+    
+    - **特点**：在直接操纵基础上，专门在元建模语言（如 EMOF）或查询语言（如 OCL）中加入命令式扩展。仍需程序员指定执行顺序，但语法更贴近模型开发。
+        
+    - **示例**：QVT Operational Mappings、XMF、MTL、Kermeta 等把 OCL 加上**赋值、循环**等结构，用于实现更复杂的逻辑或者 QVT 的 Black-box **调用外部 Java 代码**。
+```
+    - 示例代码：QVT Operational Mappings
+    -- 指定：输入模型 p，输出模型 eModel
+transformation Person2Employee(in  pModel : SourceMM,
+                                out eModel : TargetMM);
+
+-- 一个 mapping：将源模型 pModel 中所有 Person 转为 Employee
+mapping Person2EmployeeMapping(srcRoot : SourceMM!Root) : TargetMM!Root {
+  do {
+    -- 假设 TargetMM 有个 Root 容器来收所有 Employee
+    eModel := TargetMM!Factory.createRoot();
+
+    -- 显式遍历源模型中的所有 Person
+    for (p : SourceMM!Person in srcRoot.persons) {
+      -- 手动创建目标对象
+      emp : TargetMM!Employee := TargetMM!Factory.createEmployee();
+
+      -- 显式赋值
+      emp.employeeName := p.name;
+      emp.seniority    := p.age div 10;
+
+      -- 插入到输出模型的容器里
+      eModel.employees.add(emp);
+    }
+  }
+}
+```
+
+        
+- **关系式（Relational / Declarative 声明式）**
+    
+    - **特点**：以数学“关系”为核心，通过规则（constraints or relations）描述源模型元素类型与目标元素类型之间的映射，强调声明“是什么”而非“怎么做”。通常是**无副作用**，在规则中隐式创造目标元素，可自然支持双向（bidirectional）和回溯（backtracking）。
+        
+    - **示例**：QVT Relations、基于 Triple Graph Grammars (TGGs) 的实现（如 MoFLON）、以及将逻辑／答案集编程（ASP）用于转换的 JTL【turn0file0†L1-L8】。
+```
+    - 示例代码：QVT Relations
+-- 转换声明：指定源模型和目标模型
+transformation Person2Employee
+    source src : SourceMM,
+    target trg : TargetMM;
+
+-- 最顶层关系，声明 Person 和 Employee 的对应
+top relation Person2Employee {
+    -- 源模型中要匹配的元素
+    domain src  p : SourceMM!Person;
+    -- 目标模型中要创建或匹配的元素
+    domain trg  e : TargetMM!Employee;
+
+    where {
+        -- 在“where”中只写约束：Employee 的属性如何等于 Person 的属性
+        e.employeeName = p.name;
+        e.seniority    = p.age  / 10;  -- QVT OCL 中用 / 表示除法
+    }
+}
+
+```
+
+        
+- **混合式（Hybrid）**
+    
+    - **特点**：组合声明式和命令式，既允许用 declarative 规则快速表达简单映射，也可在必要处嵌入 imperative 代码以完成复杂处理。
+        
+    - **示例**：ATL（既有 declarative matched rules，也有 imperative action blocks）、ETL（Epsilon Transformation Language）【turn0file0†L8-L11】。
+        
+- **图变换（Graph-Transformation Based）**
+    
+    - **特点**：把模型视作有属性的图（节点+边），以图重写规则（LHS→RHS）来表达转换。规则可就地（in-place）修改模型，调度可隐式（FIX点）或显式（状态机、数据流）管理。
+        
+    - **示例**：AGG、AToM3（隐式 fix-point）、VIATRA2（基于 ASM 的显式控制）、GReAT（数据流图调度）【turn0file0†L12-L20】。
+    
+    -示例代码：
+```
+    TypeGraph PersonEmployeeTG {
+  // 两种节点类型
+  NodeType Person {
+    attributes
+      name : String;
+      age  : Integer;
+  }
+  NodeType Employee {
+    attributes
+      employeeName : String;
+      seniority    : Integer;
+  }
+  // 没有边类型（本例中无需建模引用）
+}
+
+HostGraph Initial {
+  conformsTo PersonEmployeeTG;
+
+  // 举例：模型里有两个 Person 实例
+  nodes
+    p1 : Person { name = "Alice"; age = 34; }
+    p2 : Person { name = "Bob";   age = 27; }
+}
+
+Rule Person2Employee {
+  // 1) LHS（左侧）——要匹配的子图
+  LHS {
+    p : Person;           // 匹配任意一个 Person 节点
+  }
+  // 2) RHS（右侧）——匹配后，图应变成什么
+  RHS {
+    p : Person;           // 原 Person 节点保留
+    e : Employee;         // 新创建一个 Employee 节点
+  }
+  // 3) Attribute Conditions（属性赋值）
+  AttributeAssignments {
+    e.employeeName = p.name;       // 复制 name
+    e.seniority    = p.age  / 10;  // age 除以 10 得到 seniority
+  }
+  // 4) 没有 Negative Application Conditions（本例不需阻止情形）
+}
+
+```
+	- 和声明式的区别：
+		- 声明式非就地：重新创建一个模型
+		- 图变换有更细的调度控制：可以指定规则的应用顺序、并行/串行、递归触发、甚至把调度也当作图模式来编写
+		- 图变换背后有一整套代数图变换（Algebraic Graph Transformation）理论，包括同余、合成公理、双向箭射（Pushout/Pushout Complement）等；声明式更多基于逻辑约束或模型管理的工程实践，缺少同样级别的“数学公理”支持。
+- **规则式（Rule-Based）**
+    
+    - **特点**：以“guard ⇒ action”为基本单元，运行时根据 guard 条件触发对应 action，触发冲突（多个 guard 同时为真）时由运行时解决。强调规则的封装、自包含，便于组合和重用。
+        
+    - **示例**：一些 DSL 或工作流引擎中，直接写 guard/action 规则；也有研究将这种风格用于模型转换【turn0file2†L17-L24】。
+```java
+    // 示例代码
+    // 1. 定义事实类型（POJO）
+public class Person {
+    private String name;
+    private int age;
+    // 构造、getter/setter 略
+}
+
+public class Employee {
+    private String employeeName;
+    private int seniority;
+    // 构造、getter/setter 略
+}
+
+// 2. Drools 规则文件 Person2Employee.drl
+package com.example.rules;
+
+import com.example.model.Person;
+import com.example.model.Employee;
+
+rule "Person to Employee"
+when
+    // Guard：匹配任何一个 Person 事实
+    $p : Person( $n : name, $a : age )
+then
+    // Action：创建一个新的 Employee 并插入 WM
+    Employee e = new Employee();
+    e.setEmployeeName($n);
+    e.setSeniority($a / 10);
+    insert( e );
+    System.out.println("Created Employee for Person: " + $n);
+end
+``` 
+- 与命令式的对比：以guard ⇒ action 为最小单位，依赖引擎的匹配机制，**无需手写循环**，但可以在 action 里写任意 Java 逻辑
+
+## 案例1：Janus transformation language（关系式/约束式语言）
+解决问题:在模型驱动工程中，往往需要对同一对**源模型**与**目标模型**进行双向修改并保持一致，但传统的单向转换或手工维护前后转换并不能保证一致性，也难以应对“非双射”和“非完备”的变换。
+概念解释：
+	- 模型的双射：源模型和目标模型一一对应。不会出现按照对应规则映射后有多个结果的情况
+	 - 非完备：对目标模型进行修改后按照现有规则无法再映射回源模型
+
+### JTL特点
+- **非双射支持（Non-bijectivity）**
+    
+    - 在展平操作中，不同的分层模型可能映射到相同的平坦模型，反向传播时会产生**多个**可能的源模型。JTL 能一次性**并行**生成所有候选源模型，供设计者选择或后续自动策略进一步决定。
+        
+- **模型近似（Model Approximation）**
+    
+    - 当手工改动使得平坦模型不再是任何正向转换的直接产物（即非完备），JTL 利用**追踪信息（trace links）**，通过搜索“最接近”的源模型来**近似**恢复一致性；同时保留对那些无法映射回源模型的属性改动作为注释，以免丢失额外信息。
+        
+- **统一双向语义**
+    
+    - 一个 JTL 程序即同时描述了正向与逆向转换，且“源/目标”仅由执行方向决定——无需维护两套手写的单向脚本，从语言层面保证了转换的一致性和可逆性。
+- ![[Pasted image 20250517191509.png]]
+## JTL 执行架构（见图 8）
+
+- **输入**：
+    
+    1. **源/目标元模型**（EMF Ecore 格式）
+        
+    2. **源模型**（如 HSM）
+        
+    3. **JTL 转换脚本**（QVT-like 语法）
+        
+- **流程**：
+    
+    1. **序列化为 ASP 断言**：将元模型和源模型编码为 DLV 可处理的谓词（`metanode/2`、`node/3`、`edge/5` 等）。
+        
+    2. **语义锚定**：通过 ATL 自动将 JTL 脚本翻译成 ASP 规则和约束（参见 Listing 1.3），包括关系声明（`relation("r2", HSM, state)`）及对应的约束语句。
+        
+    3. **ASP 求解**：DLV 求解器执行所有命题规则，**非确定性地**生成所有可能的靶模型或候选源模型（stable models）。
+        
+- **输出**：若正向执行，可得平坦 NHSM；若逆向执行，可得一组 HSM 候选模型，或最佳近似模型。
+
+### JTL 如何保证前后一致性
+
+1. **追踪信息（Trace Links）**
+    
+    - 在正向转换时，JTL 会把每个生成的目标元素与对应的源元素关联起来，形成“追踪节点（trace_node）”和“追踪边（trace_edge）” 。
+        
+    - 当逆向传播修改时，如果目标元素仍在追踪信息中，JTL 能**一一映射**回原来的源元素，从而保证对已有元素的重命名或属性变更能精确同步。
+        
+2. **模型近似（Model Approximation）**
+    
+    - 对于那些不在追踪信息中、或目标侧新增却在源模型中无对应的元素（如Δ3中的额外注释），JTL 不会盲目丢弃。它会把这些“超出映射范围”的改动保留为**附加信息**，并在生成的“近似”源模型中以注释或扩展属性形式存储，避免数据丢失 。
+        
+3. **自动生成多候选源模型**
+    
+    - 面对非双射情形（如Δ2新增的转换既可能映射到父复合状态，也可能映射到子状态），JTL 能一次性**并行**地生成所有合理的候选源模型集 $M^*$，由用户或后续策略挑选最优解 。
+        
+4. **Reachability 与 Choice Preservation**
+    
+    - **Reachability**：任何由 JTL 逆向生成的候选源模型，再经正向转换，都必须能“回到”原始的目标模型版本；
+        
+    - **Choice Preservation**：一旦用户在候选集中选定了某个源模型，JTL 保证对其进行正向再转换，能恢复出与目标模型**完全一致**的结果
