@@ -224,3 +224,28 @@ metamodel/model coupled evolution（随着时间推移模型和元模型需要�
 #### classification
 
 几种分类还不是很理解，看完下面的语言回过头再看看
+
+**操作式（Operational / Imperative）**
+
+- **特点**：在直接操纵基础上，专门在元建模语言（如 EMOF）或查询语言（如 OCL）中加入命令式扩展。仍需程序员指定执行顺序，但语法更贴近模型开发。
+- **示例**：QVT Operational Mappings、XMF、MTL、Kermeta 等把 OCL 加上赋值、循环等结构，用于实现更复杂的逻辑【turn0file1†L16-L20】；或者 QVT 的 Black-box 调用外部 Java 代码。
+
+**关系式（Relational / Declarative）**
+
+- **特点**：以数学“关系”为核心，通过规则（constraints or relations）描述源模型元素类型与目标元素类型之间的映射，强调声明“是什么”而非“怎么做”。通常是**无副作用**，在规则中隐式创造目标元素，可自然支持双向（bidirectional）和回溯（backtracking）。
+- **示例**：QVT Relations、基于 Triple Graph Grammars (TGGs) 的实现（如 MoFLON）、以及将逻辑／答案集编程（ASP）用于转换的 JTL【turn0file0†L1-L8】。
+
+**混合式（Hybrid）**
+
+- **特点**：组合声明式和命令式，既允许用 declarative 规则快速表达简单映射，也可在必要处嵌入 imperative 代码以完成复杂处理。
+- **示例**：ATL（既有 declarative matched rules，也有 imperative action blocks）、ETL（Epsilon Transformation Language）【turn0file0†L8-L11】。
+
+**图变换（Graph-Transformation Based）**
+
+- **特点**：把模型视作有属性的图（节点+边），以图重写规则（LHS→RHS）来表达转换。规则可就地（in-place）修改模型，调度可隐式（FIX点）或显式（状态机、数据流）管理。
+- **示例**：AGG、AToM3（隐式 fix-point）、VIATRA2（基于 ASM 的显式控制）、GReAT（数据流图调度）【turn0file0†L12-L20】。
+
+**规则式（Rule-Based）**
+
+- **特点**：以“guard ⇒ action”为基本单元，运行时根据 guard 条件触发对应 action，触发冲突（多个 guard 同时为真）时由运行时解决。强调规则的封装、自包含，便于组合和重用。
+- **示例**：一些 DSL 或工作流引擎中，直接写 guard/action 规则；也有研究将这种风格用于模型转换【turn0file2†L17-L24】。
