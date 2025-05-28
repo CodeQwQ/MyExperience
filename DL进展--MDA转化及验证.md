@@ -222,9 +222,6 @@ change propagation（转换的时候源和目标都要更新）解决方法：
 metamodel/model coupled evolution（随着时间推移模型和元模型需要一起更新）
 
 #### classification
-几种分类还不是很理解，看完下面的语言回过头再看看
-
-#### Language
 - **操作式（Operational / Imperative）**
   
     - **特点**：在直接操纵基础上，专门在元建模语言（如 EMOF）或查询语言（如 OCL）中加入命令式扩展。仍需程序员指定执行顺序，但语法更贴近模型开发。
@@ -446,6 +443,5 @@ end
     - 面对非双射情形（如Δ2新增的转换既可能映射到父复合状态，也可能映射到子状态），JTL 能一次性**并行**地生成所有合理的候选源模型集 $M^*$，由用户或后续策略挑选最优解 。
     
 4. **Reachability 与 Choice Preservation**
-   
-    - **Reachability**：任何由 JTL 逆向生成的候选源模型，再经正向转换，都必须能“回到”原始的目标模型版本；
-    - Choice Preservation**：一旦用户在候选集中选定了某个源模型，JTL 保证对其进行正向再转换，能恢复出与目标模型**完全一致**的结果
+   - **Reachability**：任何由 JTL 逆向生成的候选源模型，再经正向转换，都必须能“回到”原始的目标模型版本；
+    - Choice Preservation**：一旦用户在候选集中选定了某个源模型，JTL 保证对其进行正向再转换，能恢复出与目标模型**完全一致的结果
